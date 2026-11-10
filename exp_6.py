@@ -1,4 +1,3 @@
- #logistic regression
 
 import pandas as pd
 import numpy as np
@@ -12,52 +11,40 @@ from sklearn.metrics import (
     recall_score, f1_score
 )
 
-# Dataset URL
 url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
-
-# Column names
 columns = [
     'Pregnancies', 'Glucose', 'BloodPressure',
     'SkinThickness', 'Insulin', 'BMI',
     'DiabetesPedigree', 'Age', 'Outcome'
 ]
 
-# Load dataset
 df = pd.read_csv(url, names=columns)
 
-# Replace invalid zeros with missing values
 cols = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
 df[cols] = df[cols].replace(0, np.nan)
 
-# Fill missing values with median
 imputer = SimpleImputer(strategy='median')
 df[cols] = imputer.fit_transform(df[cols])
 
-# Separate features and target
 X = df.drop('Outcome', axis=1)
 y = df['Outcome']
 
-# Split dataset
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# Train without scaling
 model1 = LogisticRegression(max_iter=500)
 model1.fit(X_train, y_train)
 pred1 = model1.predict(X_test)
 
-# Scale features
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# Train with scaling
 model2 = LogisticRegression(max_iter=500)
 model2.fit(X_train_scaled, y_train)
 pred2 = model2.predict(X_test_scaled)
 
-# Compare results
 for name, pred in [
     ("Without Scaling", pred1),
     ("With Scaling", pred2)
