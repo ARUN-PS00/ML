@@ -1,52 +1,69 @@
+ #logistic regression
+
 import pandas as pd
 import numpy as np
+
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.impute import SimpleImputer
-try:
-    from IPython.display import display
-except ImportError:
-    display = print
+from sklearn.metrics import (
+    accuracy_score, precision_score,
+    recall_score, f1_score
+)
 
+# Dataset URL
 url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
-column = [
-    'Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin',
-    'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome'
+
+# Column names
+columns = [
+    'Pregnancies', 'Glucose', 'BloodPressure',
+    'SkinThickness', 'Insulin', 'BMI',
+    'DiabetesPedigree', 'Age', 'Outcome'
 ]
-df = pd.read_csv(url, names=column)
 
-cols_with_zeros = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
-df[cols_with_zeros] = df[cols_with_zeros].replace(0, np.nan)
+# Load dataset
+df = pd.read_csv(url, names=columns)
+
+# Replace invalid zeros with missing values
+cols = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
+df[cols] = df[cols].replace(0, np.nan)
+
+# Fill missing values with median
 imputer = SimpleImputer(strategy='median')
-df[cols_with_zeros] = imputer.fit_transform(df[cols_with_zeros])
+df[cols] = imputer.fit_transform(df[cols])
 
+# Separate features and target
 X = df.drop('Outcome', axis=1)
 y = df['Outcome']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
-def evaluate_logistic_regression(X_train, X_test, y_train, y_test, scale_features=False):
-    if scale_features:
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
-    model = LogisticRegression(max_iter=200, random_state=42)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    return {
-        'Accuracy': accuracy_score(y_test, y_pred),
-        'Precision': precision_score(y_test, y_pred),
-        'Recall': recall_score(y_test, y_pred),
-        'F1-Score': f1_score(y_test, y_pred)
-    }
+# Train without scaling
+model1 = LogisticRegression(max_iter=500)
+model1.fit(X_train, y_train)
+pred1 = model1.predict(X_test)
 
-results_unscaled = evaluate_logistic_regression(X_train, X_test, y_train, y_test, scale_features=False)
-results_scaled = evaluate_logistic_regression(X_train, X_test, y_train, y_test, scale_features=True)
+# Scale features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-comparison_df = pd.DataFrame([results_unscaled, results_scaled], index=['Without Scaling', 'With Scaling'])
+# Train with scaling
+model2 = LogisticRegression(max_iter=500)
+model2.fit(X_train_scaled, y_train)
+pred2 = model2.predict(X_test_scaled)
 
-print("--- Model Performance Comparison ---")
-display(comparison_df)
-
+# Compare results
+for name, pred in [
+    ("Without Scaling", pred1),
+    ("With Scaling", pred2)
+]:
+    print(name)
+    print("Accuracy:", accuracy_score(y_test, pred))
+    print("Precision:", precision_score(y_test, pred))
+    print("Recall:", recall_score(y_test, pred))
+    print("F1:", f1_score(y_test, pred))
