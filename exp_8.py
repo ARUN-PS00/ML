@@ -1,55 +1,56 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import time
+import matplotlib.pyplot as plt
+
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score
 
-print("Downloading Fashion MNIST dataset (this may take a moment)...")
-X, y = fetch_openml('Fashion-MNIST', version=1, return_X_y=True, as_frame=False, parser='auto')
+X, y = fetch_openml(
+    'Fashion-MNIST', version=1,
+    return_X_y=True, as_frame=False
+)
+
 X = X / 255.0
-X_subset, _, y_subset, _ = train_test_split(X, y, train_size=15000, stratify=y, random_state=45)
 
-X_train, X_test, y_train, y_test = train_test_split(X_subset, y_subset, test_size=0.2, random_state=42)
+X, _, y, _ = train_test_split(
+    X, y, train_size=15000,
+    stratify=y, random_state=42
+)
 
-print(f"Training set shape: {X_train.shape}")
-print(f"Testing set shape: {X_test.shape}")
-print("-" * 40)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
 k_values = [1, 3, 5, 7, 9, 15]
-accuracies = []
-execution_times = []
 
-print("Starting KNN evaluation...")
+accuracies = []
+times = []
 
 for k in k_values:
-    knn = KNeighborsClassifier(n_neighbors=k, n_jobs=-1)
-    start_time = time.time()
+    knn = KNeighborsClassifier(n_neighbors=k)
+    
+    start = time.time()
     knn.fit(X_train, y_train)
-    y_pred = knn.predict(X_test)
-    end_time = time.time()
-    acc = accuracy_score(y_test, y_pred)
-    total_time = end_time - start_time
+    pred = knn.predict(X_test)
+    end = time.time()
+    
+    acc = accuracy_score(y_test, pred)
     accuracies.append(acc)
-    execution_times.append(total_time)
-    print(f"K = {k:2d} | Accuracy: {acc*100:.2f}% | Time taken: {total_time:.2f} seconds")
+    times.append(end - start)
+    
+    print("K:", k)
+    print("Accuracy:", acc)
+    print("Time:", end - start)
 
-plt.figure(figsize=(10, 5))
-plt.subplot(1, 2, 1)
-plt.plot(k_values, accuracies, marker='o', color='b')
-plt.title('KNN Accuracy vs. K Value')
-plt.xlabel('Number of Neighbors (K)')
-plt.ylabel('Accuracy')
-plt.xticks(k_values)
-plt.grid(True, linestyle='--', alpha=0.7)
-plt.subplot(1, 2, 2)
-plt.plot(k_values, execution_times, marker='o', color='r')
-plt.title('Execution Time vs. K Value')
-plt.xlabel('Number of Neighbors (K)')
-plt.ylabel('Time (seconds)')
-plt.xticks(k_values)
-plt.grid(True, linestyle='--', alpha=0.7)
-plt.tight_layout()
+plt.plot(k_values, accuracies, marker='o')
+plt.xlabel("K Value")
+plt.ylabel("Accuracy")
+plt.title("KNN Accuracy")
 plt.show()
 
+plt.plot(k_values, times, marker='o')
+plt.xlabel("K Value")
+plt.ylabel("Execution Time")
+plt.title("KNN Execution Time")
+plt.show()
