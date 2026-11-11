@@ -1,42 +1,44 @@
 import pandas as pd
+
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.metrics import accuracy_score, f1_score
-try:
-    from IPython.display import display
-except ImportError:
-    display = print
 
-print("Downloading/Loading 20 Newsgroups dataset (this may take a moment)...")
+train = fetch_20newsgroups(
+    subset='train',
+    remove=('headers', 'footers', 'quotes')
+)
 
-train_data = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
-test_data = fetch_20newsgroups(subset='test', remove=('headers', 'footers', 'quotes'))
-X_train, y_train = train_data.data, train_data.target
-X_test, y_test = test_data.data, test_data.target
-print(f'Dataset loaded: {len(X_train)} training documents, {len(X_test)} test documents.')
+test = fetch_20newsgroups(
+    subset='test',
+    remove=('headers', 'footers', 'quotes')
+)
 
-vectorizer = CountVectorizer(stop_words='english', max_features=15000)
-X_train_counts = vectorizer.fit_transform(X_train)
-X_test_counts = vectorizer.transform(X_test)
+vectorizer = CountVectorizer(
+    stop_words='english', max_features=15000
+)
+
+X_train = vectorizer.fit_transform(train.data)
+X_test = vectorizer.transform(test.data)
+
+y_train = train.target
+y_test = test.target
 
 mnb = MultinomialNB()
-mnb.fit(X_train_counts, y_train)
-mnb_predictions = mnb.predict(X_test_counts)
-mnb_metrics = {
-    'Accuracy': accuracy_score(y_test, mnb_predictions),
-    'F1-score (Macro)': f1_score(y_test, mnb_predictions, average='macro')
-}
+mnb.fit(X_train, y_train)
 
-bnb = BernoulliNB(binarize=0.0)
-bnb.fit(X_train_counts, y_train)
-bnb_predictions = bnb.predict(X_test_counts)
-bnb_metrics = {
-    'Accuracy': accuracy_score(y_test, bnb_predictions),
-    'F1-score (Macro)': f1_score(y_test, bnb_predictions, average='macro')
-}
+pred1 = mnb.predict(X_test)
 
-comparison_df = pd.DataFrame([mnb_metrics, bnb_metrics], index=['Multinomial NB', 'Bernoulli NB'])
-print("\n--- Model Performance Comparison ---")
-display(comparison_df)
+bnb = BernoulliNB()
+bnb.fit(X_train, y_train)
 
+pred2 = bnb.predict(X_test)
+
+print("Multinomial NB")
+print("Accuracy:", accuracy_score(y_test, pred1))
+print("F1 Score:", f1_score(y_test, pred1, average='macro'))
+
+print("\nBernoulli NB")
+print("Accuracy:", accuracy_score(y_test, pred2))
+print("F1 Score:", f1_score(y_test, pred2, average='macro'))
